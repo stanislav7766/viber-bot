@@ -1,0 +1,19 @@
+{
+  "restartable": "rs",
+  "watch": [
+    "src"
+  ],
+  "ignore": [
+    ".git",
+    "node_modules/**/node_modules"
+  ],
+  "verbose": true,
+  "execMap": {
+    "js": "node --harmony"
+  },
+  "exec": "yarn build && node dist/index.js",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ext": "js json"
+}

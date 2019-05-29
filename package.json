@@ -1,0 +1,41 @@
+{
+  "name": "bots-business-project-structure",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "rollup -c",
+    "eslint-test": "eslint -c ./.eslintrc.json ./src/**/*.js",
+    "live": "nodemon",
+    "start": "node ./node_modules/.bin/forever start --uid=bot-name --append ./dist/index.js",
+    "stop": "forever stop bot-name"
+  },
+  "dependencies": {
+    "forever": "^1.0.0",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.0",
+    "husky": "^2.3.0",
+    "rollup": "^1.12.4",
+    "typescript": "^3.4.5",
+    "viber-bot": "^1.0.13",
+    "winston": "^3.2.1",
+    "moment": "^2.24.0",
+    "winston-mail": "^1.5.2",
+    "winston-telegram": "^2.0.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn eslint-test",
+      "pre-push": "yarn eslint-test"
+    }
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-prettier": "^4.3.0",
+    "eslint-plugin-import": "^2.17.3",
+    "eslint-plugin-prettier": "^3.1.0",
+    "prettier": "^1.17.1"
+  }
+}

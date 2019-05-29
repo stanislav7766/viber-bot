@@ -3,7 +3,7 @@
 import { Bot as ViberBot, Message } from 'viber-bot'
 import express from 'express'
 import dotenv from 'dotenv'
-import { commands, KeyboardGenerator, logger, markup, papyrus } from './helpers/index'
+import { commands, KeyboardGenerator, logger, markup, papyrus, context } from './helpers/index'
 
 const app = express()
 dotenv.config()
@@ -17,6 +17,9 @@ const bot = new ViberBot({
   avatar: null,
 })
 
+const ctx = context()
+ctx.on('changeContext', data => ctx.setContext(data))
+
 bot.onConversationStarted((userProfile, isSubscribed, context, onFinish) => {
   onFinish(
     new TextMessage(
@@ -28,6 +31,7 @@ bot.onConversationStarted((userProfile, isSubscribed, context, onFinish) => {
 
 bot.onTextMessage(new RegExp(`^${commands.START}$`, 'g'), async (message, response) => {
   try {
+    ctx.emit('changeContext', commands.START)
     await response.send(
       new TextMessage(papyrus.getQuestionAfterStart(), KeyboardGenerator(markup.chooseAfterStart()))
     )
@@ -39,18 +43,18 @@ bot.onTextMessage(new RegExp(`^${commands.START}$`, 'g'), async (message, respon
 bot.onTextMessage(
   new RegExp(`^${commands.FEEDBACK_NOT_CONFIRM}$`, 'g'),
   async (message, response) => {
-    ;(async function() {
-      try {
-        await response.send(new TextMessage(papyrus.getFeddbackNotConfirm()))
-      } catch (err) {
-        console.log(err)
-      }
-    })()
+    try {
+      ctx.emit('changeContext', commands.FEEDBACK_NOT_CONFIRM)
+      await response.send(new TextMessage(papyrus.getFeddbackNotConfirm()))
+    } catch (err) {
+      console.log(err)
+    }
   }
 )
 
 bot.onTextMessage(new RegExp(`^${commands.FEEDBACK_CONFIRM}$`, 'g'), async (message, response) => {
   try {
+    ctx.emit('changeContext', commands.FEEDBACK_CONFIRM)
     await response.send(new TextMessage(papyrus.getFeedbackConfirm()))
   } catch (err) {
     console.log(err)
@@ -58,6 +62,7 @@ bot.onTextMessage(new RegExp(`^${commands.FEEDBACK_CONFIRM}$`, 'g'), async (mess
 })
 bot.onTextMessage(new RegExp(`^${commands.CONSULTATION}$`, 'g'), async (message, response) => {
   try {
+    ctx.emit('changeContext', commands.CONSULTATION)
     await response.send(
       new TextMessage(papyrus.getSections(), KeyboardGenerator(markup.chooseQuestion()))
     )
@@ -67,6 +72,7 @@ bot.onTextMessage(new RegExp(`^${commands.CONSULTATION}$`, 'g'), async (message,
 })
 bot.onTextMessage(new RegExp(`^${commands.CAPABILITIES}$`, 'g'), async (message, response) => {
   try {
+    ctx.emit('changeContext', commands.CAPABILITIES)
     await response.send(
       new TextMessage(papyrus.getCapabilities(), KeyboardGenerator(markup.goBack()))
     )
@@ -78,6 +84,7 @@ bot.onTextMessage(
   new RegExp(`^${commands.PRICES_AND_DEADLINES}$`, 'g'),
   async (message, response) => {
     try {
+      ctx.emit('changeContext', commands.PRICES_AND_DEADLINES)
       await response.send(
         new TextMessage(papyrus.getPricesAndDeadlines(), KeyboardGenerator(markup.goBack()))
       )
@@ -88,6 +95,7 @@ bot.onTextMessage(
 )
 bot.onTextMessage(new RegExp(`^${commands.CONTACTS}$`, 'g'), async (message, response) => {
   try {
+    ctx.emit('changeContext', commands.CONTACTS)
     await response.send(
       new TextMessage(papyrus.getContacts(), KeyboardGenerator(markup.confirmFeedback()))
     )
@@ -97,6 +105,7 @@ bot.onTextMessage(new RegExp(`^${commands.CONTACTS}$`, 'g'), async (message, res
 })
 bot.onTextMessage(new RegExp(`^${commands.GO_BACK}$`, 'g'), async (message, response) => {
   try {
+    ctx.emit('changeContext', commands.GO_BACK)
     await response.send(
       new TextMessage(papyrus.getQuestionAfterStart(), KeyboardGenerator(markup.chooseQuestion()))
     )
@@ -106,6 +115,7 @@ bot.onTextMessage(new RegExp(`^${commands.GO_BACK}$`, 'g'), async (message, resp
 })
 bot.onTextMessage(new RegExp(`^${commands.ASK_QUESTION}$`, 'g'), async (message, response) => {
   try {
+    ctx.emit('changeContext', commands.ASK_QUESTION)
     await response.send(new TextMessage(papyrus.getAskQuestion()))
   } catch (err) {
     console.log(err)

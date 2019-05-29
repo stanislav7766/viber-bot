@@ -11,7 +11,9 @@ export const context = () => {
       const event = events[eventName]
       if (event) event.forEach(listener => listener(...data))
     },
-    setContext: val => (ctx = val),
+    setContext: val => {
+      ctx = val
+    },
     getContext: () => ctx,
   }
 }

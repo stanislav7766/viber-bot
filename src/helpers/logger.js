@@ -6,7 +6,7 @@ import dotenv from 'dotenv'
 require('winston-mail')
 
 dotenv.config()
-const {combine, label, printf, colorize, timestamp} = winston.format
+const { combine, label, printf, colorize, timestamp } = winston.format
 const logLabel = `Bots Bussiness Api`
 const logTimestamp = moment().format('MM-DD-YY H:mm:ss')
 const logMessageFormat = printf(info => `[${info.label}]: ${info.message} | ${info.timestamp}`)
@@ -33,9 +33,9 @@ export const logger = winston.createLogger({
       level: 'info',
       timestamps: true,
       format: combine(
-        label({label: logLabel}),
-        colorize({all: true}),
-        timestamp({format: logTimestamp}),
+        label({ label: logLabel }),
+        colorize({ all: true }),
+        timestamp({ format: logTimestamp }),
         logMessageFormat,
       ),
     }),

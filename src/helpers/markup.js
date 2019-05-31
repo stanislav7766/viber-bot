@@ -2,12 +2,14 @@ export const commands = {
   START: '/start',
   CONSULTATION: '/consultation',
   FEEDBACK_CONFIRM: '/feedback_confirm',
-  FEEDBACK_NOT_CONFIRM: '/feedback_not_confirm',
   CAPABILITIES: '/capabilities',
   PRICES_AND_DEADLINES: '/prices_and_deadlines',
   CONTACTS: '/contacts',
   GO_BACK: '/go_back',
   ASK_QUESTION: '/ask_question',
+  ASK_NAME: '/ask_name',
+  INITIAL: '/initial',
+  SUCCESS_FEEDBACK: '/success_feedback',
 }
 
 export const markup = {
@@ -69,8 +71,8 @@ export const markup = {
         cols: 3,
       },
       {
-        text: 'Нет, спасибо',
-        actionBody: commands.FEEDBACK_NOT_CONFIRM,
+        text: 'Вернуться назад',
+        actionBody: commands.GO_BACK,
         cols: 3,
       },
     ]

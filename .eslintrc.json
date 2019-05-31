@@ -38,10 +38,11 @@
         "semi": false,
         "singleQuote": true,
         "trailingComma": "all",
-        "bracketSpacing": false,
+        "bracketSpacing": true,
         "arrowParens": "avoid"
       }
     ],
+    "func-names": ["error", "never"],
     "import/prefer-default-export": "off",
     "no-underscore-dangle": [
       "error",
@@ -51,6 +52,11 @@
         ]
       }
     ],
+    "no-unused-expressions": ["error", { 
+      "allowShortCircuit": true, 
+      "allowTernary": true, 
+      "allowTaggedTemplates": true 
+      }],
     "no-param-reassign": 0
   }
 }

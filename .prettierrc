@@ -1,12 +1,12 @@
 {
-  "printWidth": 100,
   "tabWidth": 2,
-  "useTabs": false,
+  "parser": "typescript",
   "semi": false,
   "singleQuote": true,
+  "useTabs": false,
   "trailingComma": "all",
-  "parser": "typescript",
   "bracketSpacing": true,
   "arrowParens": "avoid",
-  "max-line-length": [true, 100]
+  "max-line-length": [true, 100],
+  "printWidth": 100
 }

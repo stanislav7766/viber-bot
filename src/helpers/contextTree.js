@@ -1,38 +1,11 @@
-import { commands, KeyboardGenerator, markup, papyrus } from '../helpers/index'
+import { commands, KeyboardGenerator, markup, papyrus, ctxTree } from '../helpers/index' //eslint-disable-line
 
-function Tree() {
-  this.nodes = []
-}
-function Node(data, parent) {
-  this.data = data
-  this.children = []
-  this.parent = parent
-  parent && parent.children.push(this)
-}
-Tree.prototype.insert = function(data, parentName) {
-  let foundParent = {}
-  if (parentName) {
-    foundParent = this.nodes.find(node => (node.data.command === parentName ? node : null))
-    this.nodes.push(
-      new Node(data, foundParent !== undefined && this.nodes.length !== 0 ? foundParent : null),
-    )
-  } else this.nodes.push(new Node(data, null))
-}
-Tree.prototype.searchContext = function(command) {
-  return this.nodes.find(node => (node.data.command === command ? node : null))
-}
-Tree.prototype.getCurrentCtx = function(command) {
-  const node = this.searchContext(command)
-  return node ? node.data : null
-}
-
-const tree = new Tree()
-tree.insert({
+ctxTree.insert({
   command: commands.INITIAL,
   keyboard: KeyboardGenerator(markup.initialKeyboard()),
   papyrus: name => papyrus.getInitialGreeting(name),
 })
-tree.insert(
+ctxTree.insert(
   {
     command: commands.START,
     keyboard: KeyboardGenerator(markup.chooseAfterStart()),
@@ -40,7 +13,7 @@ tree.insert(
   },
   commands.INITIAL,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.FEEDBACK_CONFIRM,
     keyboard: '',
@@ -48,7 +21,7 @@ tree.insert(
   },
   commands.START,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.ASK_NAME,
     keyboard: '',
@@ -56,7 +29,7 @@ tree.insert(
   },
   commands.INITIAL,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.SUCCESS_FEEDBACK,
     keyboard: '',
@@ -64,7 +37,7 @@ tree.insert(
   },
   commands.START,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.CONSULTATION,
     keyboard: KeyboardGenerator(markup.chooseQuestion()),
@@ -72,7 +45,7 @@ tree.insert(
   },
   commands.START,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.CAPABILITIES,
     keyboard: KeyboardGenerator(markup.goBack()),
@@ -80,7 +53,7 @@ tree.insert(
   },
   commands.CONSULTATION,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.CONTACTS,
     keyboard: KeyboardGenerator(markup.confirmFeedback()),
@@ -88,7 +61,7 @@ tree.insert(
   },
   commands.CONSULTATION,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.PRICES_AND_DEADLINES,
     keyboard: KeyboardGenerator(markup.goBack()),
@@ -96,7 +69,7 @@ tree.insert(
   },
   commands.CONSULTATION,
 )
-tree.insert(
+ctxTree.insert(
   {
     command: commands.ASK_QUESTION,
     keyboard: '',
@@ -104,4 +77,5 @@ tree.insert(
   },
   commands.CONSULTATION,
 )
-export { tree }
+
+export const contextTree = ctxTree

@@ -2,14 +2,16 @@ import * as winston from 'winston'
 import WinstonTelegram from 'winston-telegram'
 import moment from 'moment'
 import dotenv from 'dotenv'
+import { papyrus } from './papyrus'
 
 require('winston-mail')
 
 dotenv.config()
 const { combine, label, printf, colorize, timestamp } = winston.format
-const logLabel = `Bots Bussiness Api`
 const logTimestamp = moment().format('MM-DD-YY H:mm:ss')
-const logMessageFormat = printf(info => `[${info.label}]: ${info.message} | ${info.timestamp}`)
+const logMessageFormat = printf(
+  () => `[${papyrus.getApiLabel()}]: ${papyrus.getServerInitialization()} | ${logTimestamp}`,
+)
 const levels = {
   ...winston.config.syslog.levels,
   mail: 8,
@@ -33,7 +35,7 @@ export const logger = winston.createLogger({
       level: 'info',
       timestamps: true,
       format: combine(
-        label({ label: logLabel }),
+        label({ label: papyrus.getServerInitialization() }),
         colorize({ all: true }),
         timestamp({ format: logTimestamp }),
         logMessageFormat,

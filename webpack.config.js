@@ -1,4 +1,5 @@
 const path = require('path')
+const nodeExternals = require('webpack-node-externals')
 
 const PATHS = {
   app: path.join(__dirname, 'src/app.js'),
@@ -13,6 +14,11 @@ module.exports = {
     path: PATHS.build,
     filename: 'index.js',
   },
+  externals: [
+    nodeExternals({
+      whitelist: ['expressjs', 'encoding', 'needle'],
+    }),
+  ],
   target: 'node',
   module: {
     rules: [

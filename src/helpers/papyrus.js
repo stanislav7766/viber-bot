@@ -2,6 +2,7 @@ export const papyrus = {
   getInitialGreeting: name =>
     `Приветствую, ${name}! Чтобы начать работу с Bot Mother, нажмите /start`,
   getAskQuestion: () => `Напишите нам пожалуйста, что конкретно вас интересует?`,
+  getCustomQuestion: () => 'Администратор свяжется с вами в ближайшее время.',
   getQuestionAfterStart: () => `Выберете пожалуйста, что конкретно вас интересует?`,
   getSuccessFeedback: () => `Спасибо, заявка принята!
 
@@ -93,4 +94,6 @@ export const papyrus = {
   getAskPhone: () => 'Чтобы продолжить, укажите пожалуйста действующий номер телефона',
   getServerInitialization: () => 'Server runs on port:',
   getApiLabel: () => 'bots-business-viber ',
+  getAlreadyExistedFeedback: () =>
+    'Вы уже оставили заявку, администратор свяжется с вами в ближайшее время',
 }

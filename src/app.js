@@ -1,11 +1,13 @@
-import { Bot as ViberBot, Message } from 'viber-bot'
+import { Bot as ViberBot, Message, Events } from 'viber-bot'
 import express from 'express'
 import dotenv from 'dotenv'
-import { commands, logger, context, user, isCorrectName, contextTree } from './helpers/index'
+import { commands, logger, responsesCollection, context, user, validation } from './helpers/index'
 // import { Question, Request } from './db'
 
 dotenv.config()
 const app = express()
+const BotEvents = Events
+
 const TextMessage = Message.Text
 const PORT = process.env.API_PORT
 
@@ -16,118 +18,31 @@ const bot = new ViberBot({
   avatar: null,
 })
 
-bot.onConversationStarted((userProfile, isSubscribed, context1, onFinish) => {
-  isCorrectName(userProfile.name) && user.setName(userProfile.name)
-  const ctx = contextTree.getCurrentCtx(
-    isCorrectName(userProfile.name) ? commands.INITIAL : commands.ASK_NAME,
-  )
-  context.emit('changeContext', ctx)
-  onFinish(
-    isCorrectName(userProfile.name)
-      ? new TextMessage(ctx.papyrus(userProfile.name), ctx.keyboard)
-      : new TextMessage(ctx.papyrus),
-  )
-})
+const cbTextMessage = (...args) => new TextMessage(...args)
 
-bot.onTextMessage(new RegExp(`^${commands.START}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.START)
-    context.emit('changeContext', ctx)
-    await response.send(new TextMessage(ctx.papyrus, ctx.keyboard))
-  } catch (err) {
-    console.log(err)
-  }
-})
-
-bot.onTextMessage(new RegExp(`^([0-9]){12,12}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.SUCCESS_FEEDBACK)
-    context.emit('changeContext', ctx)
-    user.setPhone(message.text)
-    await response.send(new TextMessage(ctx.papyrus))
-  } catch (err) {
-    console.log(err)
-  }
-})
-bot.onTextMessage(new RegExp(`^([а-яієїА-ЯІЄЇa-zA-Z]){3,}$`, 'i'), async (message, response) => {
-  try {
-    if (!isCorrectName(response.userProfile.name)) {
-      const ctx = contextTree.getCurrentCtx(commands.INITIAL)
-      context.emit('changeContext', ctx)
-      user.setName(message.text)
-      await response.send(new TextMessage(ctx.papyrus(message.text), ctx.keyboard))
-    }
-  } catch (err) {
-    console.log(err)
-  }
-})
-
-bot.onTextMessage(new RegExp(`^${commands.FEEDBACK_CONFIRM}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.FEEDBACK_CONFIRM)
-    context.emit('changeContext', ctx)
-    await response.send(new TextMessage(ctx.papyrus))
-  } catch (err) {
-    console.log(err)
-  }
-})
-bot.onTextMessage(new RegExp(`^${commands.CONSULTATION}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.CONSULTATION)
-    context.emit('changeContext', ctx)
-    await response.send(new TextMessage(ctx.papyrus, ctx.keyboard))
-  } catch (err) {
-    console.log(err)
-  }
-})
-bot.onTextMessage(new RegExp(`^${commands.CAPABILITIES}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.CAPABILITIES)
-    context.emit('changeContext', ctx)
-    await response.send(new TextMessage(ctx.papyrus, ctx.keyboard))
-  } catch (err) {
-    console.log(err)
-  }
-})
-bot.onTextMessage(
-  new RegExp(`^${commands.PRICES_AND_DEADLINES}$`, 'g'),
-  async (message, response) => {
-    try {
-      const ctx = contextTree.getCurrentCtx(commands.PRICES_AND_DEADLINES)
-      context.emit('changeContext', ctx)
-      await response.send(new TextMessage(ctx.papyrus, ctx.keyboard))
-    } catch (err) {
-      console.log(err)
-    }
-  },
+bot.onConversationStarted(
+  (userProfile, isSubscribed, context1, onFinish) =>
+    responsesCollection.has(commands.CONVERSATION_STARTED) &&
+    responsesCollection.get(commands.CONVERSATION_STARTED)(
+      onFinish,
+      cbTextMessage,
+      userProfile.name,
+    ),
 )
-bot.onTextMessage(new RegExp(`^${commands.CONTACTS}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.CONTACTS)
-    context.emit('changeContext', ctx)
-    await response.send(new TextMessage(ctx.papyrus, ctx.keyboard))
-  } catch (err) {
-    console.log(err)
-  }
-})
 
-bot.onTextMessage(new RegExp(`^${commands.GO_BACK}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.CONSULTATION)
-    await response.send(new TextMessage(ctx.papyrus, ctx.keyboard))
-  } catch (err) {
-    console.log(err)
-  }
-})
-bot.onTextMessage(new RegExp(`^${commands.ASK_QUESTION}$`, 'g'), async (message, response) => {
-  try {
-    const ctx = contextTree.getCurrentCtx(commands.ASK_QUESTION)
-    context.emit('changeContext', ctx)
-
-    await response.send(new TextMessage(ctx.papyrus))
-  } catch (err) {
-    console.log(err)
-  }
+bot.on(BotEvents.MESSAGE_RECEIVED, async (message, response) => {
+  if (responsesCollection.has(message.text))
+    responsesCollection.get(message.text)(response, cbTextMessage)
+  else if (validation.isCorrectPhone(message.text))
+    responsesCollection.has(commands.SUCCESS_FEEDBACK) &&
+      responsesCollection.get(commands.SUCCESS_FEEDBACK)(response, cbTextMessage, message.text)
+  else if (validation.isName(message.text, context.getContext()))
+    responsesCollection.has(commands.INITIAL) &&
+      responsesCollection.get(commands.INITIAL)(response, cbTextMessage, message.text)
+  else if (validation.isCustomQuestion(message.text, context.getContext(), user.getPhone()))
+    responsesCollection.has(commands.CUSTOM_QUESTION) &&
+      responsesCollection.get(commands.CUSTOM_QUESTION)(response, cbTextMessage, message.text)
+  else response.send(new TextMessage('Укажите пожалуйста валиднные данные'))
 })
 
 bot.onError(err => console.log('error', err))

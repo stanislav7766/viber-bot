@@ -7,8 +7,10 @@ export const commands = {
   CONTACTS: '/contacts',
   GO_BACK: '/go_back',
   ASK_QUESTION: '/ask_question',
+  CUSTOM_QUESTION: '/custom_question',
   ASK_NAME: '/ask_name',
   INITIAL: '/initial',
+  CONVERSATION_STARTED: '/conversation_started',
   SUCCESS_FEEDBACK: '/success_feedback',
 }
 

@@ -12,7 +12,7 @@ Context.prototype.emit = function(eventName, ...data) {
   if (event) event.forEach(listener => listener(...data))
 }
 Context.prototype.setContext = function(obj) {
-  this.ctx = { ...this.getContext(), obj }
+  this.ctx = { ...this.getContext(), ...obj }
 }
 Context.prototype.getContext = function() {
   return this.ctx

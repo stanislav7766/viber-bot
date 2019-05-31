@@ -1,4 +1,8 @@
-import { commands, KeyboardGenerator, markup, papyrus, ctxTree } from '../helpers/index' //eslint-disable-line
+import { ctxTree } from './context'
+import { commands, markup } from './markup'
+import { KeyboardGenerator } from './KeyboardGenerator'
+
+import { papyrus } from './papyrus'
 
 ctxTree.insert({
   command: commands.INITIAL,
@@ -32,7 +36,7 @@ ctxTree.insert(
 ctxTree.insert(
   {
     command: commands.SUCCESS_FEEDBACK,
-    keyboard: '',
+    keyboard: KeyboardGenerator(markup.goBack()),
     papyrus: papyrus.getSuccessFeedback(),
   },
   commands.START,
@@ -72,8 +76,16 @@ ctxTree.insert(
 ctxTree.insert(
   {
     command: commands.ASK_QUESTION,
-    keyboard: '',
+    keyboard: KeyboardGenerator(markup.goBack()),
     papyrus: papyrus.getAskQuestion(),
+  },
+  commands.CONSULTATION,
+)
+ctxTree.insert(
+  {
+    command: commands.CUSTOM_QUESTION,
+    keyboard: KeyboardGenerator(markup.goBack()),
+    papyrus: papyrus.getCustomQuestion(),
   },
   commands.CONSULTATION,
 )

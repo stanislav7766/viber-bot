@@ -1,6 +1,48 @@
 function Context() {
   this.events = {}
   this.ctx = null
+  this.user = {
+    name: '',
+    phone: '',
+    customQuestion: '',
+  }
+}
+Context.prototype.getName = function() {
+  return this.user.name
+}
+
+Context.prototype.setName = function(name) {
+  this.user.name = name
+}
+Context.prototype.getPhone = function() {
+  return this.user.phone
+}
+Context.prototype.setPhone = function(phone) {
+  this.user.phone = phone
+}
+
+Context.prototype.getCustomQuestion = function() {
+  return this.user.customQuestion
+}
+Context.prototype.setCustomQuestion = function(cq) {
+  this.user.customQuestion = cq
+}
+Context.prototype.getUser = function() {
+  return this.user
+}
+Context.prototype.clearContext = function() {
+  // eslint-disable-next-line
+
+  // eslint-disable-next-line
+  ;(this.user = {
+    name: '',
+    phone: '',
+    customQuestion: '',
+  })(
+    // eslint-disable-next-line
+
+    (this.ctx = null),
+  )
 }
 
 Context.prototype.on = function(eventName, listener) {

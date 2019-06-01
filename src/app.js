@@ -1,8 +1,8 @@
 import { Bot as ViberBot, Message, Events } from 'viber-bot'
 import express from 'express'
 import dotenv from 'dotenv'
-import { commands, logger, responsesCollection, context, user, validation } from './helpers/index'
-// import { Question, Request } from './db'
+import { commands, logger, responsesCollection, context, validation } from './helpers/index'
+import { Question, Request } from './db'
 
 dotenv.config()
 const app = express()
@@ -21,15 +21,18 @@ const bot = new ViberBot({
 const cbTextMessage = (...args) => new TextMessage(...args)
 
 bot.onConversationStarted(
-  (userProfile, isSubscribed, context1, onFinish) =>
+  (contextProfile, isSubscribed, context1, onFinish) =>
     responsesCollection.has(commands.CONVERSATION_STARTED) &&
     responsesCollection.get(commands.CONVERSATION_STARTED)(
       onFinish,
       cbTextMessage,
-      userProfile.name,
+      contextProfile.name,
     ),
 )
-
+bot.onUnsubscribe(userId => {
+  context.clearContext()
+  console.log(`Unsubscribed: ${userId}, cleared ctx`)
+})
 bot.on(BotEvents.MESSAGE_RECEIVED, async (message, response) => {
   if (responsesCollection.has(message.text))
     responsesCollection.get(message.text)(response, cbTextMessage)
@@ -39,7 +42,7 @@ bot.on(BotEvents.MESSAGE_RECEIVED, async (message, response) => {
   else if (validation.isName(message.text, context.getContext()))
     responsesCollection.has(commands.INITIAL) &&
       responsesCollection.get(commands.INITIAL)(response, cbTextMessage, message.text)
-  else if (validation.isCustomQuestion(message.text, context.getContext(), user.getPhone()))
+  else if (validation.isCustomQuestion(message.text, context.getContext(), context.getPhone()))
     responsesCollection.has(commands.CUSTOM_QUESTION) &&
       responsesCollection.get(commands.CUSTOM_QUESTION)(response, cbTextMessage, message.text)
   else response.send(new TextMessage('Укажите пожалуйста валиднные данные'))

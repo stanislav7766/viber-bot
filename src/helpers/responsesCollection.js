@@ -3,7 +3,35 @@ import { papyrus } from './papyrus'
 import { context } from './context'
 import { contextTree } from './contextTree'
 import { validation } from './validation'
-import { user } from './keepUserData'
+import { Request } from '../db'
+
+const saveRequest = async (name, phone) => {
+  try {
+    const Req = await Request.findOne({ phoneNumber: phone, status: 'new' })
+    Req
+      ? console.log('already in db')
+      : new Request({
+          name,
+          phoneNumber: phone,
+          status: 'new',
+        }).save()
+  } catch (err) {
+    console.log(err)
+  }
+}
+// eslint-disable-next-line
+
+const isExistRequest = async phone => {
+  try {
+    const user = await Request.findOne({ phoneNumber: phone, status: 'new' })
+    return !validation.isEmpty(user)
+  } catch (err) {
+    console.log(err)
+    //  this step dont include in prod? this for fix eslint
+    return err
+  }
+}
+
 // eslint-disable-next-line
 const compose = (...fns) => (...args) => fns.reduce((args, fn) => [fn(...args)], args)
 
@@ -20,7 +48,7 @@ const AskQuestionResponse = async (command, response, fn) => {
   try {
     let ctx = contextTree.getCurrentCtx(command)
     context.emit('changeContext', ctx)
-    ctx = validation.isEmpty(user.getPhone())
+    ctx = validation.isEmpty(context.getPhone())
       ? contextTree.getCurrentCtx(commands.FEEDBACK_CONFIRM)
       : ctx
     await response.send(fn(ctx.papyrus, ctx.keyboard))
@@ -32,43 +60,41 @@ const AskQuestionResponse = async (command, response, fn) => {
 const CustomQuestionResponse = async (command, response, fn, cq) => {
   const ctx = contextTree.getCurrentCtx(command)
   const f1 = () => response.send(fn(ctx.papyrus, ctx.keyboard))
-  const f2 = () => user.setCustomQuestion(cq)
+  const f2 = () => context.setCustomQuestion(cq)
 
   context.emit('changeContext', ctx)
-  !validation.isEmpty(user.getPhone()) &&
+  !validation.isEmpty(context.getPhone()) &&
     compose(
       f1(),
       f2(),
     )
 }
 const SuccessFeedbackResponse = async (command, response, fn, phone) => {
-  const f1 = () => validation.isEmpty(user.getPhone()) && user.setPhone(phone)
+  validation.isEmpty(context.getPhone()) && context.setPhone(phone)
+  const f1 = () =>
+    context.getContext().command === commands.FEEDBACK_CONFIRM &&
+    saveRequest(context.getName(), phone)
   const f2 = () =>
-    context.getContext().command === commands.FEEDBACK_CONFIRM && user.setStatus(true)
-  const f3 = () =>
     TextMessageResponse(
       context.getContext().command === commands.ASK_QUESTION ? commands.ASK_QUESTION : command,
       response,
       fn,
     )
 
-  user.getStatus()
-    ? response.send(fn(papyrus.getAlreadyExistedFeedback()))
-    : compose(
+  context.getContext().command === commands.ASK_QUESTION || !(await isExistRequest(phone))
+    ? compose(
         f1(),
         f2(),
-        f3(),
       )
+    : response.send(fn(papyrus.getAlreadyExistedFeedback()))
 }
 const ConfirmFeedbackResponse = async (command, response, fn) => {
   const ctx = contextTree.getCurrentCtx(command)
   context.emit('changeContext', ctx)
   // eslint-disable-next-line
-  user.getStatus()
-    ? response.send(fn(papyrus.getAlreadyExistedFeedback()))
-    : validation.isEmpty(user.getPhone())
+  validation.isEmpty(context.getPhone())
     ? TextMessageResponse(command, response, fn)
-    : SuccessFeedbackResponse(commands.SUCCESS_FEEDBACK, response, fn, user.getPhone())
+    : SuccessFeedbackResponse(commands.SUCCESS_FEEDBACK, response, fn, context.getPhone())
 }
 const InitialResponse = async (command, response, fn, name) => {
   try {
@@ -76,13 +102,13 @@ const InitialResponse = async (command, response, fn, name) => {
     const f1 = () => context.emit('changeContext', ctx)
     const f2 = () => response.send(fn(ctx.papyrus(name), ctx.keyboard))
 
-    !validation.isEmpty(user.getName())
-      ? response.send(fn(`Вы уже указали имя ${user.getName()}`))
+    !validation.isEmpty(context.getName())
+      ? response.send(fn(`Вы уже указали имя ${context.getName()}`))
       : compose(
           f1(),
           f2(),
         )
-    !validation.isCorrectName(response.userProfile.name) && user.setName(name)
+    !validation.isCorrectName(response.userProfile.name) && context.setName(name)
   } catch (err) {
     console.log(err)
   }
@@ -97,7 +123,7 @@ const BackResponse = async (response, fn) => {
 }
 
 const ConversationStarted = async (onFinish, fn, userName) => {
-  validation.isCorrectName(userName) && user.setName(userName)
+  validation.isCorrectName(userName) && context.setName(userName)
   const ctx = contextTree.getCurrentCtx(
     validation.isCorrectName(userName) ? commands.INITIAL : commands.ASK_NAME,
   )

@@ -12,6 +12,7 @@ const isEmpty = value =>
   (typeof value === 'function' && value.length === 0) ||
   (Array.isArray(value) && value.length === 0) ||
   (value instanceof Error && value.message === '')
+
 const isCorrectName = name => !isEmoji(name) && name.length > 3
 const isCorrectPhone = phone => /^([0-9]){12,12}$/g.test(phone)
 const isName = (name, ctx) =>

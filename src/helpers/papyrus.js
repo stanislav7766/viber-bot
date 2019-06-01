@@ -96,4 +96,6 @@ export const papyrus = {
   getApiLabel: () => 'bots-business-viber ',
   getAlreadyExistedFeedback: () =>
     'Вы уже оставили заявку, администратор свяжется с вами в ближайшее время',
+  getErrorAnotherCtx: () =>
+    'Вы не можете вводить номер находясь в этом контексте, воспользуйтесь кнопкой "Оставить заявку"',
 }

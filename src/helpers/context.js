@@ -1,48 +1,44 @@
 function Context() {
   this.events = {}
-  this.ctx = null
-  this.user = {
-    name: '',
+  // this.ctx = null
+  this.ctx = {
+    command: '',
+    keyboard: '',
+    papyrus: '',
+    name: 'sras',
     phone: '',
-    customQuestion: '',
+    question: '',
   }
 }
 Context.prototype.getName = function() {
-  return this.user.name
+  return this.ctx.name
 }
 
 Context.prototype.setName = function(name) {
-  this.user.name = name
+  this.ctx.name = name
 }
 Context.prototype.getPhone = function() {
-  return this.user.phone
+  return this.ctx.phone
 }
 Context.prototype.setPhone = function(phone) {
-  this.user.phone = phone
+  this.ctx.phone = phone
 }
 
 Context.prototype.getCustomQuestion = function() {
-  return this.user.customQuestion
+  return this.ctx.question
 }
 Context.prototype.setCustomQuestion = function(cq) {
-  this.user.customQuestion = cq
+  this.ctx.question = cq
 }
-Context.prototype.getUser = function() {
-  return this.user
-}
+// Context.prototype.getUser = function() {
+//   return this.user
+// }
 Context.prototype.clearContext = function() {
   // eslint-disable-next-line
-
-  // eslint-disable-next-line
-  ;(this.user = {
-    name: '',
-    phone: '',
-    customQuestion: '',
-  })(
+  for (let key in this.ctx) {
     // eslint-disable-next-line
-
-    (this.ctx = null),
-  )
+    this.ctx[key] = ''
+  }
 }
 
 Context.prototype.on = function(eventName, listener) {

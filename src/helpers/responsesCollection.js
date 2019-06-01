@@ -1,36 +1,67 @@
+import dotenv from 'dotenv'
+import axios from 'axios'
 import { commands } from './markup'
 import { papyrus } from './papyrus'
 import { context } from './context'
 import { contextTree } from './contextTree'
 import { validation } from './validation'
-import { Request } from '../db'
+
+dotenv.config()
 
 const saveRequest = async (name, phone) => {
   try {
-    const Req = await Request.findOne({ phoneNumber: phone, status: 'new' })
-    Req
-      ? console.log('already in db')
-      : new Request({
-          name,
-          phoneNumber: phone,
-          status: 'new',
-        }).save()
+    const user = {
+      name,
+      phoneNumber: phone,
+      status: 'new',
+    }
+    const opt = {
+      headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
+    }
+    const requestResult = await axios.post(process.env.HOST_API_REQUEST, user, opt)
+    return requestResult.data
   } catch (err) {
     console.log(err)
+    // this bug to eslint
+    return err
+  }
+}
+const saveQuestion = async () => {
+  try {
+    const user = {
+      name: context.getName(),
+      phoneNumber: context.getPhone(),
+      status: 'new',
+      question: context.getCustomQuestion(),
+    }
+    console.log('user', user)
+
+    const opt = {
+      headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
+    }
+    const questionResult = await axios.post(process.env.HOST_API_QUESTION, user, opt)
+    console.log('questionResult', questionResult)
+
+    return questionResult.data
+  } catch (err) {
+    console.log(err)
+    // this bug eslint Expected to return a value at the end of async arrow function
+    return err
   }
 }
 // eslint-disable-next-line
 
-const isExistRequest = async phone => {
-  try {
-    const user = await Request.findOne({ phoneNumber: phone, status: 'new' })
-    return !validation.isEmpty(user)
-  } catch (err) {
-    console.log(err)
-    //  this step dont include in prod? this for fix eslint
-    return err
-  }
-}
+// const isExistRequest = async phone => {
+//   try {
+//     return false
+//     // const user = await Request.findOne({ phoneNumber: phone, status: 'new' })
+//     // return !validation.isEmpty(user)
+//   } catch (err) {
+//     console.log(err)
+//     //  this step dont include in prod? this for fix eslint
+//     return err
+//   }
+// }
 
 // eslint-disable-next-line
 const compose = (...fns) => (...args) => fns.reduce((args, fn) => [fn(...args)], args)
@@ -59,34 +90,41 @@ const AskQuestionResponse = async (command, response, fn) => {
 
 const CustomQuestionResponse = async (command, response, fn, cq) => {
   const ctx = contextTree.getCurrentCtx(command)
-  const f1 = () => response.send(fn(ctx.papyrus, ctx.keyboard))
-  const f2 = () => context.setCustomQuestion(cq)
-
+  context.setCustomQuestion(cq)
+  const f1 = () => saveQuestion()
+  const f2 = async res => {
+    const questionResult = await res
+    console.log('questionResult2', questionResult)
+    questionResult.status === 'ok'
+      ? response.send(fn(ctx.papyrus, ctx.keyboard))
+      : response.send(fn('что-то пошло не так'))
+  }
   context.emit('changeContext', ctx)
-  !validation.isEmpty(context.getPhone()) &&
-    compose(
-      f1(),
-      f2(),
-    )
+  !validation.isEmpty(context.getPhone()) && f2(f1())
 }
 const SuccessFeedbackResponse = async (command, response, fn, phone) => {
   validation.isEmpty(context.getPhone()) && context.setPhone(phone)
   const f1 = () =>
     context.getContext().command === commands.FEEDBACK_CONFIRM &&
     saveRequest(context.getName(), phone)
-  const f2 = () =>
-    TextMessageResponse(
-      context.getContext().command === commands.ASK_QUESTION ? commands.ASK_QUESTION : command,
-      response,
-      fn,
-    )
+  const f2 = async res => {
+    const requestResult = await res
+    console.log(context.getContext().command)
 
-  context.getContext().command === commands.ASK_QUESTION || !(await isExistRequest(phone))
-    ? compose(
-        f1(),
-        f2(),
-      )
-    : response.send(fn(papyrus.getAlreadyExistedFeedback()))
+    requestResult.status === 'ok'
+      ? TextMessageResponse(
+          context.getContext().command === commands.ASK_QUESTION ? commands.ASK_QUESTION : command,
+          response,
+          fn,
+        )
+      : response.send(fn(requestResult.msg))
+  }
+  // eslint-disable-next-line
+  context.getContext().command === commands.FEEDBACK_CONFIRM
+    ? f2(f1())
+    : context.getContext().command === commands.ASK_QUESTION
+    ? TextMessageResponse(commands.ASK_QUESTION, response, fn)
+    : response.send(fn(papyrus.getErrorAnotherCtx()))
 }
 const ConfirmFeedbackResponse = async (command, response, fn) => {
   const ctx = contextTree.getCurrentCtx(command)
@@ -124,6 +162,7 @@ const BackResponse = async (response, fn) => {
 
 const ConversationStarted = async (onFinish, fn, userName) => {
   validation.isCorrectName(userName) && context.setName(userName)
+
   const ctx = contextTree.getCurrentCtx(
     validation.isCorrectName(userName) ? commands.INITIAL : commands.ASK_NAME,
   )

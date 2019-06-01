@@ -2,7 +2,6 @@ import { Bot as ViberBot, Message, Events } from 'viber-bot'
 import express from 'express'
 import dotenv from 'dotenv'
 import { commands, logger, responsesCollection, context, validation } from './helpers/index'
-import { Question, Request } from './db'
 
 dotenv.config()
 const app = express()
@@ -30,6 +29,8 @@ bot.onConversationStarted(
     ),
 )
 bot.onUnsubscribe(userId => {
+  console.log('-------------------------------------------')
+
   context.clearContext()
   console.log(`Unsubscribed: ${userId}, cleared ctx`)
 })

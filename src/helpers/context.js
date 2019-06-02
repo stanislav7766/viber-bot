@@ -1,11 +1,10 @@
 function Context() {
   this.events = {}
-  // this.ctx = null
   this.ctx = {
     command: '',
     keyboard: '',
     papyrus: '',
-    name: 'sras',
+    name: '',
     phone: '',
     question: '',
   }
@@ -30,15 +29,9 @@ Context.prototype.getCustomQuestion = function() {
 Context.prototype.setCustomQuestion = function(cq) {
   this.ctx.question = cq
 }
-// Context.prototype.getUser = function() {
-//   return this.user
-// }
+
 Context.prototype.clearContext = function() {
-  // eslint-disable-next-line
-  for (let key in this.ctx) {
-    // eslint-disable-next-line
-    this.ctx[key] = ''
-  }
+  Object.keys(this.ctx).forEach(key => (this.ctx[key] = ''))
 }
 
 Context.prototype.on = function(eventName, listener) {

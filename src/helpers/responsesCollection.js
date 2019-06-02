@@ -7,23 +7,23 @@ import { contextTree } from './contextTree'
 import { validation } from './validation'
 
 dotenv.config()
+const opt = {
+  headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
+}
+const errorOnResponse = res => res === 502 || res === 404
 
-const saveRequest = async (name, phone) => {
+const saveRequest = async () => {
   try {
     const user = {
-      name,
-      phoneNumber: phone,
+      name: context.getName(),
+      phoneNumber: context.getPhone(),
       status: 'new',
-    }
-    const opt = {
-      headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
     }
     const requestResult = await axios.post(process.env.HOST_API_REQUEST, user, opt)
     return requestResult.data
   } catch (err) {
-    console.log(err)
-    // this bug to eslint
-    return err
+    console.log(err.response)
+    return err.response.status
   }
 }
 const saveQuestion = async () => {
@@ -31,40 +31,16 @@ const saveQuestion = async () => {
     const user = {
       name: context.getName(),
       phoneNumber: context.getPhone(),
-      status: 'new',
       question: context.getCustomQuestion(),
-    }
-    console.log('user', user)
-
-    const opt = {
-      headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
+      status: 'new',
     }
     const questionResult = await axios.post(process.env.HOST_API_QUESTION, user, opt)
-    console.log('questionResult', questionResult)
-
     return questionResult.data
   } catch (err) {
-    console.log(err)
-    // this bug eslint Expected to return a value at the end of async arrow function
-    return err
+    console.log(err.response)
+    return err.response.status
   }
 }
-// eslint-disable-next-line
-
-// const isExistRequest = async phone => {
-//   try {
-//     return false
-//     // const user = await Request.findOne({ phoneNumber: phone, status: 'new' })
-//     // return !validation.isEmpty(user)
-//   } catch (err) {
-//     console.log(err)
-//     //  this step dont include in prod? this for fix eslint
-//     return err
-//   }
-// }
-
-// eslint-disable-next-line
-const compose = (...fns) => (...args) => fns.reduce((args, fn) => [fn(...args)], args)
 
 const TextMessageResponse = async (command, response, fn) => {
   try {
@@ -91,45 +67,52 @@ const AskQuestionResponse = async (command, response, fn) => {
 const CustomQuestionResponse = async (command, response, fn, cq) => {
   const ctx = contextTree.getCurrentCtx(command)
   context.setCustomQuestion(cq)
+
   const f1 = () => saveQuestion()
   const f2 = async res => {
-    const questionResult = await res
-    console.log('questionResult2', questionResult)
-    questionResult.status === 'ok'
-      ? response.send(fn(ctx.papyrus, ctx.keyboard))
-      : response.send(fn('что-то пошло не так'))
+    if (errorOnResponse(await res)) response.send(fn(papyrus.errorOnSaveQuestion()))
+    else {
+      const questionResult = await res
+      questionResult.status === 'ok'
+        ? response.send(fn(ctx.papyrus, ctx.keyboard))
+        : response.send(fn(questionResult.msg))
+    }
   }
+
   context.emit('changeContext', ctx)
   !validation.isEmpty(context.getPhone()) && f2(f1())
 }
+
 const SuccessFeedbackResponse = async (command, response, fn, phone) => {
   validation.isEmpty(context.getPhone()) && context.setPhone(phone)
-  const f1 = () =>
-    context.getContext().command === commands.FEEDBACK_CONFIRM &&
-    saveRequest(context.getName(), phone)
-  const f2 = async res => {
-    const requestResult = await res
-    console.log(context.getContext().command)
 
-    requestResult.status === 'ok'
-      ? TextMessageResponse(
-          context.getContext().command === commands.ASK_QUESTION ? commands.ASK_QUESTION : command,
-          response,
-          fn,
-        )
-      : response.send(fn(requestResult.msg))
+  const f1 = () => saveRequest()
+  const f2 = async res => {
+    if (errorOnResponse(await res)) response.send(fn(papyrus.errorOnSaveRequest()))
+    else {
+      const requestResult = await res
+      requestResult.status === 'ok'
+        ? TextMessageResponse(
+            context.getContext().command === commands.ASK_QUESTION
+              ? commands.ASK_QUESTION
+              : command,
+            response,
+            fn,
+          )
+        : response.send(fn(requestResult.msg))
+    }
   }
-  // eslint-disable-next-line
-  context.getContext().command === commands.FEEDBACK_CONFIRM
-    ? f2(f1())
-    : context.getContext().command === commands.ASK_QUESTION
-    ? TextMessageResponse(commands.ASK_QUESTION, response, fn)
-    : response.send(fn(papyrus.getErrorAnotherCtx()))
+  const feedback = () => f2(f1())
+  const question = () => TextMessageResponse(commands.ASK_QUESTION, response, fn)
+  const another = () => response.send(fn(papyrus.getErrorAnotherCtx()))
+
+  if (context.getContext().command === commands.FEEDBACK_CONFIRM) feedback()
+  else if (context.getContext().command === commands.ASK_QUESTION) question()
+  else another()
 }
 const ConfirmFeedbackResponse = async (command, response, fn) => {
   const ctx = contextTree.getCurrentCtx(command)
   context.emit('changeContext', ctx)
-  // eslint-disable-next-line
   validation.isEmpty(context.getPhone())
     ? TextMessageResponse(command, response, fn)
     : SuccessFeedbackResponse(commands.SUCCESS_FEEDBACK, response, fn, context.getPhone())
@@ -140,12 +123,10 @@ const InitialResponse = async (command, response, fn, name) => {
     const f1 = () => context.emit('changeContext', ctx)
     const f2 = () => response.send(fn(ctx.papyrus(name), ctx.keyboard))
 
-    !validation.isEmpty(context.getName())
-      ? response.send(fn(`Вы уже указали имя ${context.getName()}`))
-      : compose(
-          f1(),
-          f2(),
-        )
+    validation.isEmpty(context.getName())
+      ? f2(f1())
+      : response.send(fn(`Вы уже указали имя ${context.getName()}`))
+
     !validation.isCorrectName(response.userProfile.name) && context.setName(name)
   } catch (err) {
     console.log(err)
@@ -172,6 +153,7 @@ const ConversationStarted = async (onFinish, fn, userName) => {
   )
 }
 const responsesCollection = new Map()
+
 responsesCollection.set(commands.START, (response, fn) =>
   TextMessageResponse(commands.START, response, fn),
 )

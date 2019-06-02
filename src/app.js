@@ -29,8 +29,6 @@ bot.onConversationStarted(
     ),
 )
 bot.onUnsubscribe(userId => {
-  console.log('-------------------------------------------')
-
   context.clearContext()
   console.log(`Unsubscribed: ${userId}, cleared ctx`)
 })

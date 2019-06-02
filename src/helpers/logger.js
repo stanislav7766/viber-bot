@@ -8,17 +8,15 @@ require('winston-mail')
 
 dotenv.config()
 const { combine, label, printf, colorize, timestamp } = winston.format
+const logLabel = papyrus.getApiLabel()
 const logTimestamp = moment().format('MM-DD-YY H:mm:ss')
-const logMessageFormat = printf(
-  () => `[${papyrus.getApiLabel()}]: ${papyrus.getServerInitialization()} | ${logTimestamp}`,
-)
+const logMessageFormat = printf(info => `[${info.label}]: ${info.message} | ${info.timestamp}`)
 const levels = {
   ...winston.config.syslog.levels,
   mail: 8,
   telegram_emergency: 9,
   telegram_info: 10,
 }
-
 winston.addColors({
   error: 'red',
   warn: 'yellow',
@@ -35,40 +33,21 @@ export const logger = winston.createLogger({
       level: 'info',
       timestamps: true,
       format: combine(
-        label({ label: papyrus.getServerInitialization() }),
+        label({ label: logLabel }),
         colorize({ all: true }),
         timestamp({ format: logTimestamp }),
         logMessageFormat,
       ),
     }),
-    new winston.transports.Mail({
-      level: 'mail',
-      tls: true,
-      unique: true,
-      to: process.env.LOGGER_MAIL_RECIPIENT,
-      from: process.env.LOGGER_MAIL_RECIPIENT,
-      host: process.env.LOGGER_MAIL_HOST,
-      port: process.env.LOGGER_MAIL_PORT,
-      subject: 'Something wrongs with Bots Bussiness',
-      username: process.env.LOGGER_MAIL_RECIPIENT,
-      password: process.env.LOGGER_MAIL_PASSWORD,
-      html: true,
-    }),
     new WinstonTelegram({
       level: 'telegram_emergency',
+      template: `[${logLabel}]: {message} | ${logTimestamp}`,
       token: process.env.INFO_BOT_TOKEN,
       chatId: process.env.INFO_BOT_CHAT_ID,
       unique: true,
-      // template: papyrus.tips.botMother.alertTemplate,
-      template: '123',
-    }),
-    new WinstonTelegram({
-      level: 'telegram_info',
-      token: process.env.INFO_BOT_TOKEN,
-      chatId: process.env.INFO_BOT_CHAT_ID,
-      unique: true,
-      template: '123',
-      // template: papyrus.tips.botMother.notificationTemplate
     }),
   ],
 })
+
+export const definiteLoggerLevel = message =>
+  logger.log(process.env.NODE_ENV === 'production' ? 'telegram_emergency' : 'info', message)

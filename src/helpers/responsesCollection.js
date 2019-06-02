@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import axios from 'axios'
 import { commands } from './markup'
 import { papyrus } from './papyrus'
+import { definiteLoggerLevel } from './logger'
 import { context } from './context'
 import { contextTree } from './contextTree'
 import { validation } from './validation'
@@ -10,7 +11,7 @@ dotenv.config()
 const opt = {
   headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
 }
-const errorOnResponse = res => res === 502 || res === 404
+const errorOnResponse = res => /^[4|5]\d{2,2}$/i.test(res)
 
 const saveRequest = async () => {
   try {
@@ -22,7 +23,9 @@ const saveRequest = async () => {
     const requestResult = await axios.post(process.env.HOST_API_REQUEST, user, opt)
     return requestResult.data
   } catch (err) {
-    console.log(err.response)
+    errorOnResponse(err.response.status) &&
+      definiteLoggerLevel(`Something wrong with api, response status code: ${err.response.status}`)
+
     return err.response.status
   }
 }
@@ -37,7 +40,9 @@ const saveQuestion = async () => {
     const questionResult = await axios.post(process.env.HOST_API_QUESTION, user, opt)
     return questionResult.data
   } catch (err) {
-    console.log(err.response)
+    errorOnResponse(err.response.status) &&
+      definiteLoggerLevel(`Something wrong with api, response status code: ${err.response.status}`)
+
     return err.response.status
   }
 }
@@ -48,74 +53,86 @@ const TextMessageResponse = async (command, response, fn) => {
     context.emit('changeContext', ctx)
     await response.send(fn(ctx.papyrus, ctx.keyboard))
   } catch (err) {
-    console.log(err)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
   }
 }
 const AskQuestionResponse = async (command, response, fn) => {
   try {
     let ctx = contextTree.getCurrentCtx(command)
     context.emit('changeContext', ctx)
-    ctx = validation.isEmpty(context.getPhone())
-      ? contextTree.getCurrentCtx(commands.FEEDBACK_CONFIRM)
-      : ctx
+    ctx =
+      (validation.isEmpty(context.getPhone()) &&
+        contextTree.getCurrentCtx(commands.FEEDBACK_CONFIRM)) ||
+      ctx
     await response.send(fn(ctx.papyrus, ctx.keyboard))
   } catch (err) {
-    console.log(err)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
   }
 }
 
 const CustomQuestionResponse = async (command, response, fn, cq) => {
-  const ctx = contextTree.getCurrentCtx(command)
-  context.setCustomQuestion(cq)
+  try {
+    const ctx = contextTree.getCurrentCtx(command)
+    context.setCustomQuestion(cq)
 
-  const f1 = () => saveQuestion()
-  const f2 = async res => {
-    if (errorOnResponse(await res)) response.send(fn(papyrus.errorOnSaveQuestion()))
-    else {
-      const questionResult = await res
-      questionResult.status === 'ok'
-        ? response.send(fn(ctx.papyrus, ctx.keyboard))
-        : response.send(fn(questionResult.msg))
+    const f1 = () => saveQuestion()
+    const f2 = async res => {
+      if (errorOnResponse(await res)) response.send(fn(papyrus.errorOnSaveQuestion()))
+      else {
+        const questionResult = await res
+        questionResult.status === 'ok'
+          ? response.send(fn(ctx.papyrus, ctx.keyboard))
+          : response.send(fn(questionResult.msg))
+      }
     }
-  }
 
-  context.emit('changeContext', ctx)
-  !validation.isEmpty(context.getPhone()) && f2(f1())
+    context.emit('changeContext', ctx)
+    if (!validation.isEmpty(context.getPhone())) f2(f1()) && context.clearContextWithoutUser()
+  } catch (err) {
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+  }
 }
 
 const SuccessFeedbackResponse = async (command, response, fn, phone) => {
-  validation.isEmpty(context.getPhone()) && context.setPhone(phone)
-
-  const f1 = () => saveRequest()
-  const f2 = async res => {
-    if (errorOnResponse(await res)) response.send(fn(papyrus.errorOnSaveRequest()))
-    else {
-      const requestResult = await res
-      requestResult.status === 'ok'
-        ? TextMessageResponse(
-            context.getContext().command === commands.ASK_QUESTION
-              ? commands.ASK_QUESTION
-              : command,
-            response,
-            fn,
-          )
-        : response.send(fn(requestResult.msg))
+  try {
+    validation.isEmpty(context.getPhone()) && context.setPhone(phone)
+    const f1 = () => saveRequest()
+    const f2 = async res => {
+      if (errorOnResponse(await res)) response.send(fn(papyrus.errorOnSaveRequest()))
+      else {
+        const requestResult = await res
+        requestResult.status === 'ok'
+          ? TextMessageResponse(
+              context.getContext().command === commands.ASK_QUESTION
+                ? commands.ASK_QUESTION
+                : command,
+              response,
+              fn,
+            )
+          : response.send(fn(requestResult.msg))
+      }
     }
-  }
-  const feedback = () => f2(f1())
-  const question = () => TextMessageResponse(commands.ASK_QUESTION, response, fn)
-  const another = () => response.send(fn(papyrus.getErrorAnotherCtx()))
+    const feedback = () => f2(f1()) && context.clearContextWithoutUser()
+    const question = () => TextMessageResponse(commands.ASK_QUESTION, response, fn)
+    const another = () => response.send(fn(papyrus.getErrorAnotherCtx()))
 
-  if (context.getContext().command === commands.FEEDBACK_CONFIRM) feedback()
-  else if (context.getContext().command === commands.ASK_QUESTION) question()
-  else another()
+    if (context.getContext().command === commands.FEEDBACK_CONFIRM) feedback()
+    else if (context.getContext().command === commands.ASK_QUESTION) question()
+    else another()
+  } catch (err) {
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+  }
 }
 const ConfirmFeedbackResponse = async (command, response, fn) => {
-  const ctx = contextTree.getCurrentCtx(command)
-  context.emit('changeContext', ctx)
-  validation.isEmpty(context.getPhone())
-    ? TextMessageResponse(command, response, fn)
-    : SuccessFeedbackResponse(commands.SUCCESS_FEEDBACK, response, fn, context.getPhone())
+  try {
+    const ctx = contextTree.getCurrentCtx(command)
+    context.emit('changeContext', ctx)
+    validation.isEmpty(context.getPhone())
+      ? TextMessageResponse(command, response, fn)
+      : SuccessFeedbackResponse(commands.SUCCESS_FEEDBACK, response, fn, context.getPhone())
+  } catch (err) {
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+  }
 }
 const InitialResponse = async (command, response, fn, name) => {
   try {
@@ -129,7 +146,7 @@ const InitialResponse = async (command, response, fn, name) => {
 
     !validation.isCorrectName(response.userProfile.name) && context.setName(name)
   } catch (err) {
-    console.log(err)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
   }
 }
 const BackResponse = async (response, fn) => {
@@ -137,20 +154,26 @@ const BackResponse = async (response, fn) => {
     const ctx = contextTree.getCurrentCtx(commands.CONSULTATION)
     await response.send(fn(ctx.papyrus, ctx.keyboard))
   } catch (err) {
-    console.log(err)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
   }
 }
 
 const ConversationStarted = async (onFinish, fn, userName) => {
-  validation.isCorrectName(userName) && context.setName(userName)
+  try {
+    validation.isCorrectName(userName) && context.setName(userName)
 
-  const ctx = contextTree.getCurrentCtx(
-    validation.isCorrectName(userName) ? commands.INITIAL : commands.ASK_NAME,
-  )
-  context.emit('changeContext', ctx)
-  onFinish(
-    validation.isCorrectName(userName) ? fn(ctx.papyrus(userName), ctx.keyboard) : fn(ctx.papyrus),
-  )
+    const ctx = contextTree.getCurrentCtx(
+      validation.isCorrectName(userName) ? commands.INITIAL : commands.ASK_NAME,
+    )
+    context.emit('changeContext', ctx)
+    onFinish(
+      validation.isCorrectName(userName)
+        ? fn(ctx.papyrus(userName), ctx.keyboard)
+        : fn(ctx.papyrus),
+    )
+  } catch (err) {
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+  }
 }
 const responsesCollection = new Map()
 

@@ -7,8 +7,8 @@
     "build": "webpack --mode production",
     "eslint-test": "eslint -c ./.eslintrc.json ./src/**/*.js",
     "live": "nodemon",
-    "start": "cross-env NODE_ENV=production node --no-deprecation ./node_modules/.bin/forever start --uid=bot-name --append ./dist/index.js",
-    "stop": "forever stop bot-name"
+    "start": "cross-env NODE_ENV=production node --no-deprecation ./node_modules/.bin/forever start --uid=bots-business-viber --append ./dist/index.js",
+    "stop": "forever stop bots-business-viber"
   },
   "dependencies": {
     "axios": "^0.19.0",

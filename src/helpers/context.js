@@ -34,12 +34,9 @@ Context.prototype.clearContext = function() {
   Object.keys(this.ctx).forEach(key => (this.ctx[key] = ''))
 }
 Context.prototype.clearContextWithoutUser = function() {
-  console.log(this.ctx)
-
   Object.keys(this.ctx).forEach(key =>
     key === 'name' || key === 'phone' ? this.ctx[key] : (this.ctx[key] = ''),
   )
-  console.log(this.ctx)
 }
 
 Context.prototype.on = function(eventName, listener) {
@@ -81,6 +78,10 @@ ContextTree.prototype.searchContext = function(command) {
 ContextTree.prototype.getCurrentCtx = function(command) {
   const node = this.searchContext(command)
   return node ? node.data : null
+}
+ContextTree.prototype.getParentOfCurContext = function(command) {
+  const node = this.searchContext(command)
+  return node && node.parent ? node.parent.data : null
 }
 
 const context = new Context()

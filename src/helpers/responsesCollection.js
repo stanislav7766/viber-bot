@@ -151,7 +151,8 @@ const InitialResponse = async (command, response, fn, name) => {
 }
 const BackResponse = async (response, fn) => {
   try {
-    const ctx = contextTree.getCurrentCtx(commands.CONSULTATION)
+    const curCtx = context.getContext()
+    const ctx = contextTree.getParentOfCurContext(curCtx.command)
     await response.send(fn(ctx.papyrus, ctx.keyboard))
   } catch (err) {
     definiteLoggerLevel(`Something wrong with bot, error: ${err}`)

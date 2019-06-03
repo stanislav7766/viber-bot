@@ -8,9 +8,10 @@ import { contextTree } from './contextTree'
 import { validation } from './validation'
 
 dotenv.config()
-const opt = {
+const instance = axios.create({
+  baseURL: process.env.HOST_API,
   headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
-}
+})
 const errorOnResponse = res => /^[4|5]\d{2,2}$/i.test(res)
 
 const saveRequest = async () => {
@@ -20,11 +21,15 @@ const saveRequest = async () => {
       phoneNumber: context.getPhone(),
       status: 'new',
     }
-    const requestResult = await axios.post(process.env.HOST_API_REQUEST, user, opt)
+
+    const requestResult = await instance.post('/request1', user)
     return requestResult.data
   } catch (err) {
     errorOnResponse(err.response.status) &&
-      definiteLoggerLevel(`Something wrong with api, response status code: ${err.response.status}`)
+      definiteLoggerLevel(
+        `Something wrong with api, response status code: ${err.response.status}`,
+        'telegram_technical',
+      )
 
     return err.response.status
   }
@@ -37,11 +42,14 @@ const saveQuestion = async () => {
       question: context.getCustomQuestion(),
       status: 'new',
     }
-    const questionResult = await axios.post(process.env.HOST_API_QUESTION, user, opt)
+    const questionResult = await instance.post('/question', user)
     return questionResult.data
   } catch (err) {
     errorOnResponse(err.response.status) &&
-      definiteLoggerLevel(`Something wrong with api, response status code: ${err.response.status}`)
+      definiteLoggerLevel(
+        `Something wrong with api, response status code: ${err.response.status}`,
+        'telegram_technical',
+      )
 
     return err.response.status
   }
@@ -53,7 +61,7 @@ const TextMessageResponse = async (command, response, fn) => {
     context.emit('changeContext', ctx)
     await response.send(fn(ctx.papyrus, ctx.keyboard))
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 const AskQuestionResponse = async (command, response, fn) => {
@@ -66,7 +74,7 @@ const AskQuestionResponse = async (command, response, fn) => {
       ctx
     await response.send(fn(ctx.papyrus, ctx.keyboard))
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 
@@ -89,7 +97,7 @@ const CustomQuestionResponse = async (command, response, fn, cq) => {
     context.emit('changeContext', ctx)
     if (!validation.isEmpty(context.getPhone())) f2(f1()) && context.clearContextWithoutUser()
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 
@@ -120,7 +128,7 @@ const SuccessFeedbackResponse = async (command, response, fn, phone) => {
     else if (context.getContext().command === commands.ASK_QUESTION) question()
     else another()
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 const ConfirmFeedbackResponse = async (command, response, fn) => {
@@ -131,7 +139,7 @@ const ConfirmFeedbackResponse = async (command, response, fn) => {
       ? TextMessageResponse(command, response, fn)
       : SuccessFeedbackResponse(commands.SUCCESS_FEEDBACK, response, fn, context.getPhone())
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 const InitialResponse = async (command, response, fn, name) => {
@@ -146,7 +154,7 @@ const InitialResponse = async (command, response, fn, name) => {
 
     !validation.isCorrectName(response.userProfile.name) && context.setName(name)
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 const BackResponse = async (response, fn) => {
@@ -155,7 +163,7 @@ const BackResponse = async (response, fn) => {
     const ctx = contextTree.getParentOfCurContext(curCtx.command)
     await response.send(fn(ctx.papyrus, ctx.keyboard))
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 
@@ -173,7 +181,7 @@ const ConversationStarted = async (onFinish, fn, userName) => {
         : fn(ctx.papyrus),
     )
   } catch (err) {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
   }
 }
 const responsesCollection = new Map()

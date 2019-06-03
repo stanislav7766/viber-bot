@@ -37,7 +37,7 @@ bot.onConversationStarted(
 )
 bot.onUnsubscribe(userId => {
   context.clearContext()
-  definiteLoggerLevel(`Unsubscribed: ${userId}, ctx cleared`)
+  definiteLoggerLevel(`Unsubscribed: ${userId}, ctx cleared`, 'telegram_technical')
 })
 bot.on(BotEvents.MESSAGE_RECEIVED, async (message, response) => {
   if (responsesCollection.has(message.text))
@@ -54,14 +54,16 @@ bot.on(BotEvents.MESSAGE_RECEIVED, async (message, response) => {
   else response.send(new TextMessage('Укажите пожалуйста валиднные данные'))
 })
 
-bot.onError(err => definiteLoggerLevel(`Something wrong with bot, error: ${err}`))
+bot.onError(err =>
+  definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical'),
+)
 
 app.use('/viber/webhook', bot.middleware())
 
 app.listen(PORT, () => {
   console.log(`Application running on PORT: ${PORT}`)
   bot.setWebhook(`${process.env.EXPOSE_URL}/viber/webhook`).catch(err => {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`)
+    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
     process.exit(1)
   })
 })

@@ -41,13 +41,20 @@ export const logger = winston.createLogger({
     }),
     new WinstonTelegram({
       level: 'telegram_technical',
-      template: `[${logLabel}][telegram_technical]: {message} | ${logTimestamp}`,
+      template: `[${logLabel}]: {message} | ${logTimestamp}`,
       token: process.env.INFO_BOT_TOKEN,
-      chatId: process.env.INFO_BOT_CHAT_ID,
+      chatId: process.env.CHAT_ID_TECHNICAL,
+      unique: true,
+    }),
+    new WinstonTelegram({
+      level: 'telegram_sales',
+      template: `[${logLabel}]: {message} | ${logTimestamp}`,
+      token: process.env.INFO_BOT_TOKEN,
+      chatId: process.env.CHAT_ID_SALES,
       unique: true,
     }),
   ],
 })
 
-export const definiteLoggerLevel = message =>
-  logger.log(process.env.NODE_ENV === 'production' ? 'telegram_technical' : 'info', message)
+export const definiteLoggerLevel = (message, level) =>
+  logger.log(process.env.NODE_ENV === 'production' ? level : 'info', message)

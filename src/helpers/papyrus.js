@@ -1,4 +1,7 @@
 export const papyrus = {
+  getNotifyTechnical: code => `Something wrong with api, response status code: ${code}`,
+  getNotifySales: code => `Something wrong with api, response status code: ${code}`,
+
   getInitialGreeting: name =>
     `Приветствую, ${name}! Чтобы начать работу с Bot Mother, нажмите /start`,
   getAskQuestion: () => `Напишите нам пожалуйста, что конкретно вас интересует?`,
@@ -97,7 +100,6 @@ export const papyrus = {
   getAlreadyExistedFeedback: () =>
     'Вы уже оставили заявку, администратор свяжется с вами в ближайшее время.',
   getErrorAnotherCtx: () => 'Воспользуйтесь пожалуйста подсказками бота для общения.',
-  getBadApi: () => 'На данный момент сервис недоступен. Повторите попытку пожалуйста позже.',
   errorOnSaveRequest: () =>
     'Возникла ошибка при сохранении запроса. Попробуйте повторить запрос позже или обратитесь за другими контактными данными.',
   errorOnSaveQuestion: () =>

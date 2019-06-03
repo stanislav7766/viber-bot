@@ -14,7 +14,7 @@ const logMessageFormat = printf(info => `[${info.label}]: ${info.message} | ${in
 const levels = {
   ...winston.config.syslog.levels,
   mail: 8,
-  telegram_emergency: 9,
+  telegram_technical: 9,
   telegram_info: 10,
 }
 winston.addColors({
@@ -40,8 +40,8 @@ export const logger = winston.createLogger({
       ),
     }),
     new WinstonTelegram({
-      level: 'telegram_emergency',
-      template: `[${logLabel}]: {message} | ${logTimestamp}`,
+      level: 'telegram_technical',
+      template: `[${logLabel}][telegram_technical]: {message} | ${logTimestamp}`,
       token: process.env.INFO_BOT_TOKEN,
       chatId: process.env.INFO_BOT_CHAT_ID,
       unique: true,
@@ -50,4 +50,4 @@ export const logger = winston.createLogger({
 })
 
 export const definiteLoggerLevel = message =>
-  logger.log(process.env.NODE_ENV === 'production' ? 'telegram_emergency' : 'info', message)
+  logger.log(process.env.NODE_ENV === 'production' ? 'telegram_technical' : 'info', message)

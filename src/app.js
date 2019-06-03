@@ -8,6 +8,7 @@ import {
   responsesCollection,
   context,
   validation,
+  papyrus,
 } from './helpers/index'
 
 dotenv.config()
@@ -37,7 +38,7 @@ bot.onConversationStarted(
 )
 bot.onUnsubscribe(userId => {
   context.clearContext()
-  definiteLoggerLevel(`Unsubscribed: ${userId}, ctx cleared`, 'telegram_technical')
+  definiteLoggerLevel(papyrus.getNotifyUnsubscribeUser(userId), 'telegram_technical')
 })
 bot.on(BotEvents.MESSAGE_RECEIVED, async (message, response) => {
   if (responsesCollection.has(message.text))
@@ -51,19 +52,17 @@ bot.on(BotEvents.MESSAGE_RECEIVED, async (message, response) => {
   else if (validation.isCustomQuestion(message.text, context.getContext(), context.getPhone()))
     responsesCollection.has(commands.CUSTOM_QUESTION) &&
       responsesCollection.get(commands.CUSTOM_QUESTION)(response, cbTextMessage, message.text)
-  else response.send(new TextMessage('Укажите пожалуйста валиднные данные'))
+  else response.send(new TextMessage(papyrus.getNotValidData()))
 })
 
-bot.onError(err =>
-  definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical'),
-)
+bot.onError(err => definiteLoggerLevel(papyrus.getNotifyErrorBot(err), 'telegram_technical'))
 
 app.use('/viber/webhook', bot.middleware())
 
 app.listen(PORT, () => {
   console.log(`Application running on PORT: ${PORT}`)
   bot.setWebhook(`${process.env.EXPOSE_URL}/viber/webhook`).catch(err => {
-    definiteLoggerLevel(`Something wrong with bot, error: ${err}`, 'telegram_technical')
+    definiteLoggerLevel(papyrus.getNotifyErrorBot(err), 'telegram_technical')
     process.exit(1)
   })
 })

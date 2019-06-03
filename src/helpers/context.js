@@ -33,11 +33,6 @@ Context.prototype.setCustomQuestion = function(cq) {
 Context.prototype.clearContext = function() {
   Object.keys(this.ctx).forEach(key => (this.ctx[key] = ''))
 }
-Context.prototype.clearContextWithoutUser = function() {
-  Object.keys(this.ctx).forEach(key =>
-    key === 'name' || key === 'phone' ? this.ctx[key] : (this.ctx[key] = ''),
-  )
-}
 
 Context.prototype.on = function(eventName, listener) {
   const event = this.events[eventName]

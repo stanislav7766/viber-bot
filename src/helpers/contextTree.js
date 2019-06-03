@@ -36,7 +36,7 @@ ctxTree.insert(
 ctxTree.insert(
   {
     command: commands.SUCCESS_FEEDBACK,
-    keyboard: KeyboardGenerator(markup.goBack()),
+    keyboard: KeyboardGenerator(markup.initialKeyboard()),
     papyrus: papyrus.getSuccessFeedback(),
   },
   commands.START,
@@ -84,7 +84,7 @@ ctxTree.insert(
 ctxTree.insert(
   {
     command: commands.CUSTOM_QUESTION,
-    keyboard: KeyboardGenerator(markup.goBack()),
+    keyboard: KeyboardGenerator(markup.initialKeyboard()),
     papyrus: papyrus.getCustomQuestion(),
   },
   commands.CONSULTATION,

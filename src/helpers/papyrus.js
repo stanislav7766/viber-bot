@@ -1,7 +1,10 @@
 export const papyrus = {
   getNotifyTechnical: code => `Something wrong with api, response status code: ${code}`,
   getNotifySales: code => `Something wrong with api, response status code: ${code}`,
-
+  getAlreadyExistName: name => `Вы уже указали имя ${name}`,
+  getNotValidData: () => 'Укажите пожалуйста валиднные данные',
+  getNotifyErrorBot: err => `Something wrong with bot, error: ${err}`,
+  getNotifyUnsubscribeUser: userId => `Unsubscribed: ${userId}, ctx cleared`,
   getInitialGreeting: name =>
     `Приветствую, ${name}! Чтобы начать работу с Bot Mother, нажмите /start`,
   getAskQuestion: () => `Напишите нам пожалуйста, что конкретно вас интересует?`,

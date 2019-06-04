@@ -16,12 +16,12 @@ const app = express()
 const BotEvents = Events
 
 const TextMessage = Message.Text
-const PORT = process.env.API_PORT
+const PORT = process.env.APP_PORT
 
 const bot = new ViberBot({
   logger,
   authToken: process.env.BOT_ACCOUNT_TOKEN,
-  name: 'Bots business',
+  name: papyrus.getAppLabel(),
   avatar: null,
 })
 

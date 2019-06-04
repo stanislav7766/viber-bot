@@ -4,18 +4,16 @@ import moment from 'moment'
 import dotenv from 'dotenv'
 import { papyrus } from './papyrus'
 
-require('winston-mail')
-
 dotenv.config()
 const { combine, label, printf, colorize, timestamp } = winston.format
-const logLabel = papyrus.getApiLabel()
+const logLabel = papyrus.getAppLabel()
 const logTimestamp = moment().format('MM-DD-YY H:mm:ss')
 const logMessageFormat = printf(info => `[${info.label}]: ${info.message} | ${info.timestamp}`)
 const levels = {
   ...winston.config.syslog.levels,
   mail: 8,
   telegram_technical: 9,
-  telegram_info: 10,
+  telegram_sales: 10,
 }
 winston.addColors({
   error: 'red',

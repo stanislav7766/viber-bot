@@ -99,7 +99,7 @@ export const papyrus = {
     'Здраствуйте! У вас в профиле указано не корректное имя, как нам к вам обращаться?',
   getAskPhone: () => 'Чтобы продолжить, укажите пожалуйста действующий номер телефона.',
   getServerInitialization: () => 'Server runs on port:',
-  getApiLabel: () => 'bots-business-viber',
+  getAppLabel: () => 'bots-business-viber',
   getAlreadyExistedFeedback: () =>
     'Вы уже оставили заявку, администратор свяжется с вами в ближайшее время.',
   getErrorAnotherCtx: () => 'Воспользуйтесь пожалуйста подсказками бота для общения.',

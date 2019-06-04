@@ -9,7 +9,7 @@ import { validation } from './validation'
 
 dotenv.config()
 const instance = axios.create({
-  baseURL: process.env.HOST_API,
+  baseURL: process.env.API_HOST,
   headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
 })
 const errorOnResponse = res => /^[4|5]\d{2,2}$/i.test(res)
@@ -60,6 +60,9 @@ const TextMessageResponse = async (command, response, fn) => {
 }
 const AskQuestionResponse = async (command, response, fn) => {
   try {
+    const userName = response.userProfile.name
+    if (validation.isEmpty(context.getName()) && validation.isCorrectName(userName))
+      context.setName(userName)
     let ctx = contextTree.getCurrentCtx(command)
     context.emit('changeContext', ctx)
     ctx =
@@ -129,6 +132,9 @@ const SuccessFeedbackResponse = async (command, response, fn, phone) => {
 }
 const ConfirmFeedbackResponse = async (command, response, fn) => {
   try {
+    const userName = response.userProfile.name
+    if (validation.isEmpty(context.getName()) && validation.isCorrectName(userName))
+      context.setName(userName)
     const ctx = contextTree.getCurrentCtx(command)
     context.emit('changeContext', ctx)
     validation.isEmpty(context.getPhone())
@@ -185,7 +191,7 @@ const responsesCollection = new Map()
 responsesCollection.set(commands.START, (response, fn) =>
   TextMessageResponse(commands.START, response, fn),
 )
-responsesCollection.set(commands.INITIAL, async (response, fn, name) =>
+responsesCollection.set(commands.INITIAL, (response, fn, name) =>
   InitialResponse(commands.INITIAL, response, fn, name),
 )
 responsesCollection.set(commands.FEEDBACK_CONFIRM, (response, fn) =>
@@ -212,8 +218,8 @@ responsesCollection.set(commands.ASK_QUESTION, (response, fn) =>
 responsesCollection.set(commands.CUSTOM_QUESTION, (response, fn, cq) =>
   CustomQuestionResponse(commands.CUSTOM_QUESTION, response, fn, cq),
 )
-responsesCollection.set(commands.GO_BACK, async (response, fn) => BackResponse(response, fn))
-responsesCollection.set(commands.CONVERSATION_STARTED, async (onFinish, fn, name) =>
+responsesCollection.set(commands.GO_BACK, (response, fn) => BackResponse(response, fn))
+responsesCollection.set(commands.CONVERSATION_STARTED, (onFinish, fn, name) =>
   ConversationStarted(onFinish, fn, name),
 )
 
